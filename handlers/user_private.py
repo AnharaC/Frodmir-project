@@ -1,9 +1,23 @@
-from aiogram import types, Router
-from aiogram.filters import CommandStart
+from aiogram import types, Router, F
+
+from aiogram.filters import CommandStart, Command
+from aiogram.types import FSInputFile
+from service.analysis_data import Punnett_tabla
 
 user_private_router = Router()
 
-@user_private_router.message(CommandStart())
-async def command_start_handler(message):
-    ## Подключить InlineKeyboard
-    await message.answer_photo(photo="https://img2.joyreactor.cc/pics/post/furry-%D1%84%D1%8D%D0%BD%D0%B4%D0%BE%D0%BC%D1%8B-windu_utom-8362527.jpeg", caption="Hi")
+# @user_private_router.message(CommandStart())
+# async def command_start_handler(message):
+#     ## Подключить InlineKeyboard
+#     image = FSInputFile("photos\photo_2024-10-06_21-07-48.jpg")
+#     await message.answer_photo(photo=image, caption="Привіт! \nВведи генотип особи чоловічої та жіночої статі: ")
+    
+
+@user_private_router.message()
+async def send_answer(message: types.Message):
+    with open("database\gen.txt", 'w') as f:
+        user_message = message.text
+        f.write(user_message)
+
+
+
