@@ -18,9 +18,6 @@ bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=Pars
 
 dp.include_router(user_private_router)
 
-async def on_shutdown(bot):
-    print("Ох бот решил упасть")
-
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
 

@@ -11,22 +11,21 @@ from service.analysis_data import Punnett_table
 user_private_router = Router()
 
 class Message_State(StatesGroup):
-    input_gen = State()
-    take_result = State()
-    sending_result = State()
+    # Реализовать State
+    pass
 
 @user_private_router.message()
 async def command_help_handler(message: Message):
     if message.text == "/help":
-        stickers = FSInputFile("photos\sticker.webp")
+        stickers = FSInputFile("photos\hi.webp")
         await message.answer_sticker(sticker=stickers, emoji="👋")
         await message.answer(text=("👋 Привіт! Цей бот допоможе проаналізувати генетичні питання 🧬, зокрема визначити можливі генотипи та ймовірність передачі ознак нащадкам 🌱 за допомогою таблиці Пеннета 📊. \nДізнавайся більше про генетику і свої спадкові можливості завдяки цім командам!\n" + " " * 20 + "=>    /start - запускає опитування"))
 
 async def signs_message(message: Message):
     if message.text == "/start":
         image = FSInputFile() # Вставить фотографию для сообщения про ознаки
-        await message.answer_photo(photo=image, caption="")#Дописать описание к ознакам + подключить клавиатуру
+        await message.answer_photo(photo=image, caption="") # Дописать описание к ознакам + подключить клавиатуру
 
-
+# Написать следуйщие этапы опроса
 
 

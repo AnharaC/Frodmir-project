@@ -1,7 +1,7 @@
 import json
 
 def Punnett_table():
-    with open("database/temporary_data.json", "r", encoding="utf-8") as file:
+    with open("database/temp_data.json", "r", encoding="utf-8") as file:
         data = json.load(file)
         genotypes = data["gen"]
         male_genotype, female_genotype = genotypes.split(", ")
