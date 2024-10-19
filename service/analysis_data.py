@@ -1,6 +1,9 @@
 import json
 
+print("Provekra 4")
+
 def Punnett_table():
+    print("Provekra 5")
     with open("database/temp_data.json", "r", encoding="utf-8") as file:
         data = json.load(file)
         genotypes = data["gen"]
@@ -17,3 +20,9 @@ def Punnett_table():
             number_of_apppearences = children_genotypes.count(genotype) # расчет количество появлений конкретного генотипа среди всех возможных
             percentage = number_of_apppearences / len(children_genotypes) # ну и расчет вероятности по формуле количество появлений/общее количество
     return male_genotype, children_genotypes, percentage, female_genotype
+
+def analis(data: dict):
+        data = json.dumps(data)
+        data=json.loads(str(data))
+        with open("database/temp_data.json", "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
