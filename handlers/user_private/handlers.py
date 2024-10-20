@@ -1,35 +1,21 @@
-from aiogram import types, Router, F
+from aiogram import types, F
+import os
 
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, Command, or_f, StateFilter
-from aiogram.types import FSInputFile, Message
+from aiogram.types import Message, FSInputFile
 
 from keyboard.InlineKeyboard import get_callback_btns
 from service.analysis_data import Punnett_table, analis
-from filters.chat_types import ChatTypeFilter
-
-user_private_router = Router()
-user_private_router.message.filter(ChatTypeFilter(['private']))
-
-
-class Message_State(StatesGroup):
-    quest_1 = State()
-    quest_2 = State()
-    quest_3 = State()
-    # start_easy_survey = State()
-    # start_detailed_survey = State()
-    analis_answer = State()
-    # get_result = State()
-
-open("database/temp_data.json", 'w').close()
+from .MessageState import Message_State
+from .router import user_private_router
 
 @user_private_router.message(or_f(Command("help", "start"), CommandStart(deep_link=True)))
 async def command_help_handler(message: Message):
-    stickers = FSInputFile("photos\hi.webp")
+    # stickers = os.path.join('assets', 'image', 'hi.webp')
+    stickers = os.path.join('assets', 'image', 'hi.webp')
 
-
-    await message.answer_sticker(sticker=stickers, emoji="👋")
+    await message.answer_sticker(sticker=FSInputFile(stickers), emoji="👋")
     await message.answer(text=(
         "👋 Привіт! Цей бот допоможе проаналізувати генетичні питання 🧬, "
         "зокрема визначити можливі генотипи та ймовірність передачі ознак "
@@ -43,10 +29,10 @@ async def command_help_handler(message: Message):
 
 @user_private_router.message(Command("about"))
 async def command_about_handler(message: Message):
-    photo = FSInputFile("photos\photo_2024-10-18_16-02-20.jpg")
+    photo = os.path.join('assets', 'image', 'photo_2024-10-18_16-02-20.jpg')
 
     await message.answer_photo(
-    photo=photo, 
+    photo=FSInputFile(photo), 
     caption=(
         "👋 Привіт! Раді вітати тебе в боті, який допоможе заглибитись у світ генетики 🧬. "
         "Наш бот здатний відповісти на різні генетичні питання та проаналізувати твої відповіді, "
@@ -73,17 +59,17 @@ async def command_about_handler(message: Message):
 
 @user_private_router.message(F.text.lower() == "ти бачишь мене?")
 async def see_me(message: Message):
-    video = FSInputFile("photos\IMG_5115.MP4")
-    await message.answer_video(video=video)
+    video = os.path.join('assets', 'video', 'ssstik.io_@yuipaws_1728557809636.mp4')
+    await message.answer_video(video=FSInputFile(video))
 
 
-@user_private_router.message(StateFilter(None), or_f(Command("/survey"), (F.text.lower() == "опитування")))
+@user_private_router.message(StateFilter(None), or_f(Command("survey"), (F.text.lower() == "опитування")))
 async def command_start_handler(message: Message, state: FSMContext):
-    image = FSInputFile("photos\photo_2024-10-16_08-56-42.jpg")
+    image = os.path.join('assets', 'image', 'photo_2024-10-16_08-56-42.jpg')
 
     await state.set_state(Message_State.quest_1)
 
-    await message.answer_photo(photo=image, caption="За якими ознаками ви хотіл би розпочати?",
+    await message.answer_photo(photo=FSInputFile(image), caption="За якими ознаками ви хотіл би розпочати?",
                                             reply_markup=get_callback_btns(btns={
                                                 "Колір очей": "type_of_color_eye",
                                                 "Група крові": "type_of_blood",
@@ -92,18 +78,18 @@ async def command_start_handler(message: Message, state: FSMContext):
 
 @user_private_router.callback_query(F.text.lower() == "доступно")
 async def detailed_survey(callback: types.CallbackQuery):
-    video = FSInputFile("photos\RPReplay_Final1705860476.mp4")
-    await callback.message.answer_video(video=video, caption="Ой ой ой а це ще не доступно, соси бібу")
+    video = os.path.join('assets', 'video', 'RPReplay_Final1705860476.mp4')
+    await callback.message.answer_video(video=FSInputFile(video), caption="Ой ой ой а це ще не доступно, соси бібу")
 
 
 ## Все про очи
 @user_private_router.callback_query(Message_State.quest_1, F.data.startswith('type_of_color_eye'))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    gif = FSInputFile('photos\аллах-халяль.gif')
+    gif = os.path.join('assets', 'image', 'аллах-халяль.gif')
 
     await state.set_state(Message_State.quest_2)
 
-    await callback.message.answer_animation(animation=gif,
+    await callback.message.answer_animation(animation=FSInputFile(gif),
                                                 reply_markup=get_callback_btns(btns={
                                                     "Блакитні": "blue",
                                                     "Карі": "kari",
@@ -114,11 +100,11 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
 ## Все про карій
 @user_private_router.callback_query(Message_State.quest_2, F.data.startswith('kari'))
 async def second_quest(callback: types.CallbackQuery, state: FSMContext):
-    image = FSInputFile('photos/furry-фэндомы-furry-m-8352840.jpeg')
+    image = os.path.join('assets', 'image', 'furry-фэндомы-furry-m-8352840.jpeg')
 
     await state.set_state(Message_State.analis_answer)
 
-    await callback.message.answer_photo(photo=image,
+    await callback.message.answer_photo(photo=FSInputFile(image),
                                             caption="Чи були в одно з батькві, братів/сестер блакитні очі?",
                                             reply_markup=get_callback_btns(btns={
                                                 "Так": "final_yes_kari",
@@ -191,11 +177,11 @@ async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: 
 ## Все про групу крові
 @user_private_router.callback_query(Message_State.quest_1, F.data.startswith('type_of_blood'))
 async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
-    image = FSInputFile('photos\photo_2024-10-19_10-02-38.jpg')
+    image = os.path.join('assets', 'image', 'photo_2024-10-19_10-02-38.jpg')
 
     await state.set_state(Message_State.quest_2)
     
-    await callback.message.answer_photo(photo=image, caption="Яка ваша група крові?",
+    await callback.message.answer_photo(photo=FSInputFile(image), caption="Яка ваша група крові?",
                                             reply_markup=get_callback_btns(btns={
                                                 "I(O)": "first_blood",
                                                 "II(A)": "second_blood",
@@ -207,7 +193,7 @@ async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
 ## Перша група крові
 @user_private_router.callback_query(Message_State.quest_2, F.data.startswith("first_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    gif = FSInputFile('photos\komaru-комару.gif')
+    # gif = os.path.join('assets', 'image', 'komaru-комару.gif')
 
     data = {
         'gen': 'OO, Aa'
@@ -224,11 +210,11 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
 ## Друга група крові
 @user_private_router.callback_query(Message_State.quest_2, F.data.startswith("second_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    video = FSInputFile('photos\эпик фейл.mp4')
+    video = os.path.join('assets\video', 'эпик фейл.mp4')
 
     await state.set_state(Message_State.analis_answer)
     
-    await callback.message.answer_video(video=video,
+    await callback.message.answer_video(video=FSInputFile(video),
                                             caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
                                             reply_markup=get_callback_btns(btns={
                                                 "Так": "final_yes_blood",
@@ -269,11 +255,11 @@ async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 ## Терться група крові
 @user_private_router.callback_query(Message_State.quest_2, F.data.startswith("third_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    image = FSInputFile('photos\wqdasd.jpg')
+    image =  os.path.join('assets', 'image', 'wqdasd.jpg')
 
     await state.set_state(Message_State.analis_answer)
     
-    await callback.message.answer_photo(photo=image,
+    await callback.message.answer_photo(photo=FSInputFile(image),
                                             caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
                                             reply_markup=get_callback_btns(btns={
                                                 "Так": "final_yes_blood",
@@ -313,7 +299,7 @@ async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 ## Четверта група крові
 @user_private_router.callback_query(Message_State.quest_2, F.data.startswith("fourth_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    gif = FSInputFile('photos\image0-156-1-1.gif')
+    # gif = os.path.join('assets', 'image', 'image0-156-1-1.gif')
 
     data = {
         'gen': 'AB, OO'
@@ -336,9 +322,3 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
 #     await message.answer(text=f"{male_genotype}; \n{female_genotype}; \n{children_genotypes}; \n{percentage}")
     
 #     await state.clear()
-
-
-
-
-
-
