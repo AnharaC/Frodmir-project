@@ -4,7 +4,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, Command, or_f, StateFilter
 from aiogram.types import FSInputFile, Message
-from aiogram.utils.deep_linking import decode_payload
 
 from keyboard.InlineKeyboard import get_callback_btns
 from service.analysis_data import Punnett_table, analis
@@ -44,10 +43,10 @@ async def command_help_handler(message: Message):
 
 @user_private_router.message(Command("about"))
 async def command_about_handler(message: Message):
-    videos = FSInputFile("photos\ой сало сало сало українське сало «high resolution».mp4")
+    photo = FSInputFile("photos\photo_2024-10-18_16-02-20.jpg")
 
-    await message.answer_video(
-    video=videos, 
+    await message.answer_photo(
+    photo=photo, 
     caption=(
         "👋 Привіт! Раді вітати тебе в боті, який допоможе заглибитись у світ генетики 🧬. "
         "Наш бот здатний відповісти на різні генетичні питання та проаналізувати твої відповіді, "
@@ -55,11 +54,10 @@ async def command_about_handler(message: Message):
         "За допомогою таблиці Пеннета 📊 ти дізнаєшся, як певні ознаки можуть проявитися "
         "у твоїх майбутніх нащадків 🤱. Це ідеальна можливість не лише розібратися в своїй генетиці, "
         "але й поглибити свої знання про основи спадковості 🧠."
-        " " * 20 +
-        " Натискай => /survey - щоб розпочати опитування та дізнатися більше про свої спадкові можливості! "
+        "\n\t\t\tНатискай => /survey - щоб розпочати опитування та дізнатися більше про свої спадкові можливості! "
         "Бот задасть кілька простих запитань, а ти отримаєш результат у вигляді генетичного прогнозу 🔮."
         )
-    )  
+    )
 
 
 # @user_private_router.message(StateFilter(None), or_f(CommandStart(), (F.text.lower() == "старт")))
