@@ -1,9 +1,7 @@
 import json
 
-print("Provekra 4")
 
 def Punnett_table():
-    print("Provekra 5")
     with open("database/temp_data.json", "r", encoding="utf-8") as file:
         data = json.load(file)
         genotypes = data["gen"]

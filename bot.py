@@ -19,6 +19,7 @@ bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=Pars
 dp.include_router(user_private_router)
 
 async def main():
+    print("bot started")
     await bot.delete_webhook(drop_pending_updates=True)
 
     await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
