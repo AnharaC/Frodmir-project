@@ -6,7 +6,7 @@ from aiogram.types import TelegramObject
 
 from typing import Callable, Dict, Any, Awaitable
 
-from .save_data import save_user_data 
+from ..service.save_data import save_user_data 
 
 class UserMessageMiddleware(BaseMiddleware):
     async def __call__(self, 
