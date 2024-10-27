@@ -7,8 +7,14 @@ from aiogram.types import Message, FSInputFile
 
 from keyboard.InlineKeyboard import get_callback_btns
 from service.analysis_data import Punnett_table
-from .MessageState import Message_State
+from .MessageState import MessageState
 from .router import user_private_router
+
+from middleware.MessageMiddleware import UserMessageMiddleware
+from middleware.CallbackMiddleware import CallbackMiddleware
+
+user_private_router.message.middleware(UserMessageMiddleware())
+user_private_router.callback_query.middleware(CallbackMiddleware())
 
 @user_private_router.message(or_f(Command("help", "start"), CommandStart(deep_link=True)))
 async def command_help_handler(message: Message):
@@ -55,7 +61,7 @@ async def see_me(message: Message):
 async def command_start_handler(message: Message, state: FSMContext):
     image = os.path.join('assets', 'image', 'photo_2024-10-16_08-56-42.jpg')
 
-    await state.set_state(Message_State.quest_1)
+    await state.set_state(MessageState.quest_1)
     await state.update_data(quests={
         "start_quest": {
             "result_quest1": None,
@@ -78,11 +84,11 @@ async def detailed_survey(callback: types.CallbackQuery):
 
 
 ## Все про очи
-@user_private_router.callback_query(Message_State.quest_1, F.data.startswith('type_of_color_eye'))
+@user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_color_eye'))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
     gif = os.path.join('assets', 'image', 'аллах-халяль.gif')
 
-    await state.set_state(Message_State.quest_2)
+    await state.set_state(MessageState.quest_2)
     
     user_data = await state.get_data()
     quests = user_data['quests']
@@ -99,11 +105,11 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
         
         
 ## Все про карій
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith('kari'))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('kari'))
 async def second_quest(callback: types.CallbackQuery, state: FSMContext):
     image = os.path.join('assets', 'image', 'furry-фэндомы-furry-m-8352840.jpeg')
 
-    await state.set_state(Message_State.analis_answer)
+    await state.set_state(MessageState.analis_answer)
 
     user_data = await state.get_data()
     quests = user_data['quests']
@@ -119,7 +125,7 @@ async def second_quest(callback: types.CallbackQuery, state: FSMContext):
                                             }))
 
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_yes_kari'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_kari'))
 async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -129,10 +135,13 @@ async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
         
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_no_kari'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_kari'))
 async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -141,32 +150,33 @@ async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
     quests['gen'] = "[AA,Aa]"
 
     await state.update_data(quests=quests)
-           
-    await state.clear()
-
-
-## Все про блакитний
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith('blue'))
-async def analis_answer_blue(callback: types.CallbackQuery, state: FSMContext):
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-
-    quests['start_quest']['result_quest2'] = "[Блакитні]:"
-    quests['gen'] = ['aa', 'aA']
-
-    await state.update_data(quests=quests)
 
     user_data = await state.get_data()
     genotypes = user_data['quests']['gen']
 
     await Punnett_table(callback, genotypes)
 
-    await state.clear()
+## Все про блакитний
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('blue'))
+async def analis_answer_blue(callback: types.CallbackQuery, state: FSMContext):
+
+    user_data = await state.get_data()
+    quests = user_data['quests']
+
+    quests['start_quest']['result_quest2'] = callback.data
+    quests['gen'] = ['aa', 'aA']
+
+    await state.update_data(quests=quests)
+    print(quests)
+
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
 ## Все про світло зелено блакитний
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith('green/light_brown'))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('green/light_brown'))
 async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -176,15 +186,18 @@ async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: 
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
 ## Все про групу крові
-@user_private_router.callback_query(Message_State.quest_1, F.data.startswith('type_of_blood'))
+@user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_blood'))
 async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
     image = os.path.join('assets', 'image', 'photo_2024-10-19_10-02-38.jpg')
 
-    await state.set_state(Message_State.quest_2)
+    await state.set_state(MessageState.quest_2)
     
     user_data = await state.get_data()
     quests = user_data['quests']
@@ -202,7 +215,7 @@ async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
 
 
 ## Перша група крові
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith("first_blood"))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("first_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
     # gif = os.path.join('assets', 'image', 'komaru-комару.gif')
 
@@ -213,15 +226,18 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
 ## Друга група крові
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith("second_blood"))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("second_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
     video = os.path.join('assets/video', 'эпик фейл.mp4')
 
-    await state.set_state(Message_State.analis_answer)
+    await state.set_state(MessageState.analis_answer)
 
     user_data = await state.get_data()
     quests = user_data['quests']
@@ -237,7 +253,7 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
                                             }))
 
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_yes_blood'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
 async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -247,10 +263,13 @@ async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
    
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_no_blood'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
 async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -260,15 +279,18 @@ async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
 ## Терться група крові
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith("third_blood"))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("third_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
     image =  os.path.join('assets', 'image', 'wqdasd.jpg')
 
-    await state.set_state(Message_State.analis_answer)
+    await state.set_state(MessageState.analis_answer)
 
     user_data = await state.get_data()
     quests = user_data['quests']
@@ -284,7 +306,7 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
                                             }))
 
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_yes_blood'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
 async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -294,10 +316,13 @@ async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
-@user_private_router.callback_query(Message_State.analis_answer, F.data.startswith('final_no_blood'))
+@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
 async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
@@ -307,10 +332,13 @@ async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
 
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 ## Четверта група крові
-@user_private_router.callback_query(Message_State.quest_2, F.data.startswith("fourth_blood"))
+@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("fourth_blood"))
 async def first_quest(callback: types.CallbackQuery, state: FSMContext):
     # gif = os.path.join('assets', 'image', 'image0-156-1-1.gif')
 
@@ -321,11 +349,14 @@ async def first_quest(callback: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(quests=quests)
  
-    await state.clear()
+    user_data = await state.get_data()
+    genotypes = user_data['quests']['gen']
+
+    await Punnett_table(callback, genotypes)
 
 
 # print("Provekra 1")
-# @user_private_router.message(Message_State.get_result)
+# @user_private_router.message(MessageState.get_result)
 # async def execute_table(message: types.Message, state: FSMContext):
 #     print("Provekra 2")
 #     male_genotype, children_genotypes, percentage, female_genotype = Punnett_table()

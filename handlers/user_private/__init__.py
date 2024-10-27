@@ -1,1 +1,1 @@
-from .handlers import *
+from .handlers import user_private_router

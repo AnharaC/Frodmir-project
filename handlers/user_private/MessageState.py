@@ -1,6 +1,6 @@
 from aiogram.fsm.state import StatesGroup, State
 
-class Message_State(StatesGroup):
+class MessageState(StatesGroup):
     quest_1 = State()
     quest_2 = State()
     quest_3 = State()

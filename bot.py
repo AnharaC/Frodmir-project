@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from Middleware.db import UserMessageHandler
 from service.bot_cmds_list import private
 
 from handlers.user_private import user_private_router
@@ -25,8 +24,6 @@ dp.include_router(user_private_router)
 
 async def main():
     print("bot started")
-
-    dp.message.middleware(UserMessageHandler())
 
     await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
     
