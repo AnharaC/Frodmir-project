@@ -68,7 +68,10 @@ async def command_start_handler(message: Message, state: FSMContext):
             "result_quest2": None,
             "result_quest3": None
         },
-        "gen": None
+        "gen": {
+            1: None,
+            2: None
+        }
     })
     await message.answer_photo(photo=FSInputFile(image), caption="За якими ознаками ви хотіл би розпочати?",
                                             reply_markup=get_callback_btns(btns={
@@ -82,277 +85,289 @@ async def detailed_survey(callback: types.CallbackQuery):
     video = os.path.join('assets', 'video', 'RPReplay_Final1705860476.mp4')
     await callback.message.answer_video(video=FSInputFile(video), caption="Ой ой ой а це ще не доступно, соси бібу")
 
+genotypes = []
 
 ## Все про очи
-@user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_color_eye'))
-async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    gif = os.path.join('assets', 'image', 'аллах-халяль.gif')
+for gen in range(1, 2):
+    @user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_color_eye'))
+    async def first_quest(callback: types.CallbackQuery, state: FSMContext):
+        gif = os.path.join('assets', 'image', 'аллах-халяль.gif')
 
-    await state.set_state(MessageState.quest_2)
-    
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest1'] = callback.data
+        await state.set_state(MessageState.quest_2)
+        
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest1'] = callback.data
 
-    await state.update_data(quests=quests)
+        await state.update_data(quests=quests)
 
-    await callback.message.answer_animation(animation=FSInputFile(gif),
+        await callback.message.answer_animation(animation=FSInputFile(gif),
+                                                    reply_markup=get_callback_btns(btns={
+                                                        "Блакитні": "blue",
+                                                        "Карі": "kari",
+                                                        "Зелено/Світло карі": "green/light_brown",
+                                                    }))
+            
+            
+    ## Все про карій
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith('kari'))
+    async def second_quest(callback: types.CallbackQuery, state: FSMContext):
+        image = os.path.join('assets', 'image', 'furry-фэндомы-furry-m-8352840.jpeg')
+
+        await state.set_state(MessageState.analis_answer)
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = callback.data
+
+        await state.update_data(quests=quests)
+
+        await callback.message.answer_photo(photo=FSInputFile(image),
+                                                caption="Чи були в одного з батьків, братів/сестер блакитні очі?",
                                                 reply_markup=get_callback_btns(btns={
-                                                    "Блакитні": "blue",
-                                                    "Карі": "kari",
-                                                    "Зелено/Світло карі": "green/light_brown",
+                                                    "Так": "final_yes_kari",
+                                                    "Ні": "final_no_kari",
                                                 }))
-        
-        
-## Все про карій
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('kari'))
-async def second_quest(callback: types.CallbackQuery, state: FSMContext):
-    image = os.path.join('assets', 'image', 'furry-фэндомы-furry-m-8352840.jpeg')
-
-    await state.set_state(MessageState.analis_answer)
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = callback.data
-
-    await state.update_data(quests=quests)
-
-    await callback.message.answer_photo(photo=FSInputFile(image),
-                                            caption="Чи були в одно з батькві, братів/сестер блакитні очі?",
-                                            reply_markup=get_callback_btns(btns={
-                                                "Так": "final_yes_kari",
-                                                "Ні": "final_no_kari",
-                                            }))
 
 
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_kari'))
-async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_kari'))
+    async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
 
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Так]:"
-    quests['gen'] = "[Aa,aa]"
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Так]:"
+        quests['gen'][gen] = "[Aa]"
 
-    await state.update_data(quests=quests)
+        await state.update_data(quests=quests)
 
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
-    await Punnett_table(callback, genotypes)
-        
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+            
 
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_kari'))
-async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_kari'))
+    async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
 
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Ні]:"
-    quests['gen'] = "[AA,Aa]"
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Ні]:"
+        quests['gen'][gen] = "[AA]"
 
-    await state.update_data(quests=quests)
+        await state.update_data(quests=quests)
 
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
-    await Punnett_table(callback, genotypes)
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
 
-## Все про блакитний
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('blue'))
-async def analis_answer_blue(callback: types.CallbackQuery, state: FSMContext):
+    ## Все про блакитний
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith('blue'))
+    async def analis_answer_blue(callback: types.CallbackQuery, state: FSMContext):
 
-    user_data = await state.get_data()
-    quests = user_data['quests']
+        user_data = await state.get_data()
+        quests = user_data['quests']
 
-    quests['start_quest']['result_quest2'] = callback.data
-    quests['gen'] = ['aa', 'aA']
+        quests['start_quest']['result_quest2'] = callback.data
+        quests['gen'][gen] = "[aa]"
 
-    await state.update_data(quests=quests)
-    print(quests)
+        await state.update_data(quests=quests)
+        print(quests)
 
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
-    await Punnett_table(callback, genotypes)
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
 
+    ## Все про світло зелено блакитний
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith('green/light_brown'))
+    async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: FSMContext):
 
-## Все про світло зелено блакитний
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith('green/light_brown'))
-async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: FSMContext):
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = "[зелено-блакитні]:"
+        quests['gen'][gen] = "[Aa]"
 
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = "[зелено-блакитні]:"
-    quests['gen'] = "[AA,aa]"
+        await state.update_data(quests=quests)
 
-    await state.update_data(quests=quests)
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
 
 
 ## Все про групу крові
-@user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_blood'))
-async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
-    image = os.path.join('assets', 'image', 'photo_2024-10-19_10-02-38.jpg')
+for gen in range(1, 2):
+    @user_private_router.callback_query(MessageState.quest_1, F.data.startswith('type_of_blood'))
+    async def eaysy_survey(callback: types.CallbackQuery, state: FSMContext):
+        image = os.path.join('assets', 'image', 'photo_2024-10-19_10-02-38.jpg')
 
-    await state.set_state(MessageState.quest_2)
+        await state.set_state(MessageState.quest_2)
+        
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest1'] = callback.data
+
+        await state.update_data(quests=quests)
+        
+        await callback.message.answer_photo(photo=FSInputFile(image), caption="Яка ваша група крові?",
+                                                reply_markup=get_callback_btns(btns={
+                                                    "I(O)": "first_blood",
+                                                    "II(A)": "second_blood",
+                                                    "III(B)": "third_blood",
+                                                    "IV(AB)": "fourth_blood",
+                                                }))
+
+
+    ## Перша група крові
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith("first_blood"))
+    async def first_quest(callback: types.CallbackQuery, state: FSMContext):
+        # gif = os.path.join('assets', 'image', 'komaru-комару.gif')
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = "I(O)"
+        quests['gen'][gen] = "[OO]"
+
+        await state.update_data(quests=quests)
+
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
+
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+
+
+    ## Друга група крові
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith("second_blood"))
+    async def first_quest(callback: types.CallbackQuery, state: FSMContext):
+        video = os.path.join('assets/video', 'эпик фейл.mp4')
+
+        await state.set_state(MessageState.analis_answer)
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = callback.data
+
+        await state.update_data(quests=quests)
+
+        await callback.message.answer_video(video=FSInputFile(video),
+                                                caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
+                                                reply_markup=get_callback_btns(btns={
+                                                    "Так": "final_yes_blood",
+                                                    "Ні": "final_no_blood",
+                                                }))
+
+
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
+    async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Так]:"
+        quests['gen1'][gen] = "[AO]"
+
+        await state.update_data(quests=quests)
     
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest1'] = callback.data
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
-    await state.update_data(quests=quests)
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+
+
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
+    async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Ні]:"
+        quests['gen'][gen] = "[AA]"
+
+        await state.update_data(quests=quests)
+
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
+
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+
+    ## Терться група крові
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith("third_blood"))
+    async def first_quest(callback: types.CallbackQuery, state: FSMContext):
+        image =  os.path.join('assets', 'image', 'wqdasd.jpg')
+
+        await state.set_state(MessageState.analis_answer)
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = callback.data
+
+        await state.update_data(quests=quests)
+        
+        await callback.message.answer_photo(photo=FSInputFile(image),
+                                                caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
+                                                reply_markup=get_callback_btns(btns={
+                                                    "Так": "final_yes_blood",
+                                                    "Ні": "final_no_blood",
+                                                }))
+
+
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
+    async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Так]:"
+        quests['gen'][gen] = "[BO]"
+
+        await state.update_data(quests=quests)
+
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
+
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+
+
+    @user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
+    async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest3'] = "[Ні]:"
+        quests['gen'][gen] = "[BB]"
+
+        await state.update_data(quests=quests)
+
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
+
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
+
+    ## Четверта група крові
+    @user_private_router.callback_query(MessageState.quest_2, F.data.startswith("fourth_blood"))
+    async def first_quest(callback: types.CallbackQuery, state: FSMContext):
+        # gif = os.path.join('assets', 'image', 'image0-156-1-1.gif')
+
+        user_data = await state.get_data()
+        quests = user_data['quests']
+        quests['start_quest']['result_quest2'] = "[IV(AB)]:"
+        quests['gen'][gen] = "[AB]"
+
+        await state.update_data(quests=quests)
     
-    await callback.message.answer_photo(photo=FSInputFile(image), caption="Яка ваша група крові?",
-                                            reply_markup=get_callback_btns(btns={
-                                                "I(O)": "first_blood",
-                                                "II(A)": "second_blood",
-                                                "III(B)": "third_blood",
-                                                "IV(AB)": "fourth_blood",
-                                            }))
+        user_data = await state.get_data()
+        genotypes.append(user_data['quests']['gen'][gen])
 
+        if gen == 2:
+            await Punnett_table(callback, genotypes)
 
-## Перша група крові
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("first_blood"))
-async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    # gif = os.path.join('assets', 'image', 'komaru-комару.gif')
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = "I(O)"
-    quests['gen'] = "[OO,Aa]"
-
-    await state.update_data(quests=quests)
-
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
-
-
-## Друга група крові
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("second_blood"))
-async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    video = os.path.join('assets/video', 'эпик фейл.mp4')
-
-    await state.set_state(MessageState.analis_answer)
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = callback.data
-
-    await state.update_data(quests=quests)
-
-    await callback.message.answer_video(video=FSInputFile(video),
-                                            caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
-                                            reply_markup=get_callback_btns(btns={
-                                                "Так": "final_yes_blood",
-                                                "Ні": "final_no_blood",
-                                            }))
-
-
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
-async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Так]:"
-    quests['gen'] = "[AO,aa]"
-
-    await state.update_data(quests=quests)
-   
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
-
-
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
-async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Ні]:"
-    quests['gen'] = "[AA,aA]"
-
-    await state.update_data(quests=quests)
-
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
-
-
-## Терться група крові
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("third_blood"))
-async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    image =  os.path.join('assets', 'image', 'wqdasd.jpg')
-
-    await state.set_state(MessageState.analis_answer)
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = callback.data
-
-    await state.update_data(quests=quests)
-    
-    await callback.message.answer_photo(photo=FSInputFile(image),
-                                            caption="Чи була в одного з батьків, братів\сестер I(О) група крові?",
-                                            reply_markup=get_callback_btns(btns={
-                                                "Так": "final_yes_blood",
-                                                "Ні": "final_no_blood",
-                                            }))
-
-
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_yes_blood'))
-async def analis_answer(callback: types.CallbackQuery, state: FSMContext):
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Так]:"
-    quests['gen'] = "[BB,OA]"
-
-    await state.update_data(quests=quests)
-
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
-
-
-@user_private_router.callback_query(MessageState.analis_answer, F.data.startswith('final_no_blood'))
-async def analis_answer_no(callback: types.CallbackQuery, state: FSMContext):
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest3'] = "[Ні]:"
-    quests['gen'] = "[BO,AO]"
-
-    await state.update_data(quests=quests)
-
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
-
-## Четверта група крові
-@user_private_router.callback_query(MessageState.quest_2, F.data.startswith("fourth_blood"))
-async def first_quest(callback: types.CallbackQuery, state: FSMContext):
-    # gif = os.path.join('assets', 'image', 'image0-156-1-1.gif')
-
-    user_data = await state.get_data()
-    quests = user_data['quests']
-    quests['start_quest']['result_quest2'] = "[IV(AB)]:"
-    quests['gen'] = "[AB,OO]"
-
-    await state.update_data(quests=quests)
- 
-    user_data = await state.get_data()
-    genotypes = user_data['quests']['gen']
-
-    await Punnett_table(callback, genotypes)
 
 
 # print("Provekra 1")
