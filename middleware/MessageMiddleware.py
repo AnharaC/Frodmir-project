@@ -6,7 +6,7 @@ from aiogram.types import TelegramObject
 
 from typing import Callable, Dict, Any, Awaitable
 
-from ..service.save_data import save_user_data 
+from service.save_data import save_user_data 
 
 class UserMessageMiddleware(BaseMiddleware):
     async def __call__(self, 
@@ -32,7 +32,7 @@ class UserMessageMiddleware(BaseMiddleware):
         
         response = await handler(event, data)
 
-        file_path = f'data/user_data_server/user_{user_id}.json'
+        file_path = f'data/user_server/user_{user_id}.json'
         save_user_data(user_id, log_data, file_path)
 
         return response

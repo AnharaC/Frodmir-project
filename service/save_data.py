@@ -15,5 +15,7 @@ def save_user_data(user_id: int, log_data: Dict[str, Any], file_path: str) -> No
     with open(file_path, 'w', encoding="utf-8") as file:
         json.dump(existing_data, file, indent=4)
 
+# def save_result_data()
+
 
 
