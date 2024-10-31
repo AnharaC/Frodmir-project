@@ -264,8 +264,6 @@ async def analis_answer_green_light_brown(callback: types.CallbackQuery, state: 
     quests['start_quest']['result_quest2'] = "[зелено-блакитні]:"
     quests['gen'] = "[Aa]"
 
-    await state.update_data(quests=quests)
-
     user_data = await state.get_data()
     genotypes.append(user_data['quests']['gen'])
 
