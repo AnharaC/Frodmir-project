@@ -1,5 +1,3 @@
-import json
-
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
@@ -21,14 +19,17 @@ class CallbackMiddleware(BaseMiddleware):
         
         log_data['quests'] = state_data.get('quests', {
             "start_quest": {
+                "survey_number": None,
                 "result_quest1": None,
                 "result_quest2": None,
                 "result_quest3": None
             },
-            "gen": None
+            "gen": {
+                1: None,
+                2: None
+            }
         })
         
-        file_path = f"data/user_server/user_{user_id}.json"
-        save_user_data(user_id, log_data, file_path)
+        save_user_data(user_id, log_data)
 
         return response

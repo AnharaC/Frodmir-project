@@ -1,7 +1,7 @@
 from aiogram import types
+from service.survey_manager import save_survey
 
 async def Punnett_table(callback: types.CallbackQuery, genotypes):
-
     male_genotype, female_genotype = genotypes
     
     if male_genotype != None and female_genotype != None:
@@ -22,6 +22,7 @@ async def Punnett_table(callback: types.CallbackQuery, genotypes):
                  f"Дитячі генотипи: {children_genotypes}; \n"
                  f"Відсотки: {percentage}"
         )
+
 
     return male_genotype, children_genotypes, percentage, female_genotype
 

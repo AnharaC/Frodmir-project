@@ -1,7 +1,8 @@
 import json
 from typing import Any, Dict
 
-def save_user_data(user_id: int, log_data: Dict[str, Any], file_path: str) -> None:
+def save_user_data(user_id: int, log_data: Dict[str, Any]) -> None:
+    file_path = f"data/user_server/user_{user_id}.json"
     existing_data = []
 
     try:

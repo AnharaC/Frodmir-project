@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from aiogram import BaseMiddleware
@@ -32,8 +31,7 @@ class UserMessageMiddleware(BaseMiddleware):
         
         response = await handler(event, data)
 
-        file_path = f'data/user_server/user_{user_id}.json'
-        save_user_data(user_id, log_data, file_path)
+        save_user_data(user_id, log_data)
 
         return response
 

@@ -5,9 +5,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, Command, or_f, StateFilter
 from aiogram.types import Message, FSInputFile
 
+from typing import Dict, Any
+
 from keyboard.InlineKeyboard import get_callback_btns
 
 from service.analysis_data import Punnett_table
+from service.survey_manager import save_survey, get_survey_filename
+
 from .MessageState import MessageState
 from .router import user_private_router
 
@@ -16,6 +20,7 @@ from middleware.CallbackMiddleware import CallbackMiddleware
 
 user_private_router.message.middleware(UserMessageMiddleware())
 user_private_router.callback_query.middleware(CallbackMiddleware())
+
 
 
 ## Handlers відповідаючи за команди
@@ -69,27 +74,43 @@ async def command_about_handler(message: Message):
         )
     )
 
+@user_private_router.message(Command("clear"))
+async def command_clear_handler(message: Message, state: FSMContext):
+    photo = os.path.join('assets', 'image', 'photo_2024-10-30_15-01-47.jpg')
+
+    await state.clear()
+    await message.answer_photo(photo=FSInputFile(photo), caption="Clear!!")
+
 
 @user_private_router.message(Command("history"))
 async def detailed_survey(message: Message):
+    user_id = message.from_user.id
     photo = os.path.join('assets', 'image', 'photo_2024-10-26_13-10-32.jpg')
-    await message.answer_photo(photo=FSInputFile(photo), caption="Резульата опитування N[num_result]: Чоловічий генотип: N; \n"
-                 "Жіночий генотип: N; \n"
-                 "Дитячі генотипи: N; \n"
-                 "Відсотки: N;",
-                 reply_markup=get_callback_btns(btns={
-                     "Назад": "back",
-                     "Далі": "next",
-                 }))
+
+    survey_filenames = get_survey_filename()
+    history_message = "📜 Історія опитуваннь:\n\n" + "\n".join([f"✅ {filename}" for filename in survey_filenames])
+    await message.answer(history_message)
+
+    # await message.answer_photo(photo=FSInputFile(photo), caption="Резульата опитування N[num_result]: Чоловічий генотип: N; \n"
+    #              "Жіночий генотип: N; \n"
+    #              "Дитячі генотипи: N; \n"
+    #              "Відсотки: N;",
+    #              reply_markup=get_callback_btns(btns={
+    #                  "Назад": "back",
+    #                  "Далі": "next",
+    #              }))
 
 
 @user_private_router.message(StateFilter(None), or_f(Command("survey"), (F.text.lower() == "опитування")))
 async def command_start_handler(message: Message, state: FSMContext):
     image = os.path.join('assets', 'image', 'photo_2024-10-16_08-56-42.jpg')
 
+    user_data = await state.get_data()
+
     await state.set_state(MessageState.quest_1)
     await state.update_data(quests={
         "start_quest": {
+            "survey_number": None,
             "result_quest1": None,
             "result_quest2": None,
             "result_quest3": None
@@ -107,7 +128,7 @@ async def command_start_handler(message: Message, state: FSMContext):
                                                 "Назад": "return",
                                                 "Відмінити": "cancel",
                                             }))
-
+    
 
 ## Handlers які відповідальні за "Назад" та "Відмінити"
 @user_private_router.callback_query(StateFilter("*"), F.data.startswith("cancel"))
@@ -115,6 +136,16 @@ async def cancel_handler(callback: types.CallbackQuery, state: FSMContext) -> No
     curent_state = await state.get_state()
     if curent_state is None:
         return
+    
+    user_data = await state.get_data()
+    quests = user_data.get("quests", {})
+    survey_number = quests.get("start_quest", {}).get("survey_number", 0) - 1
+
+    if survey_number < 0:
+        survey_number = 0
+    
+    quests['start_quest']['survey_number'] = survey_number
+    await state.update_data(quests=quests)
 
     await state.clear()
     await callback.message.answer("Опитування була відмінено")
@@ -253,6 +284,13 @@ async def analis_answer_blue(callback: types.CallbackQuery, state: FSMContext):
 
     user_data = await state.get_data()
     genotypes.append(user_data['quests']['gen'])
+
+    user_id = callback.message.from_user.id
+    print(f"Callback user:{user_id}")
+    result = quests['gen']
+
+    save_survey(user_id=user_id, results=result)
+
 
     
 ## Все про світло зелено блакитний
