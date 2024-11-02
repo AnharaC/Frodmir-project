@@ -1,1 +1,1 @@
-from .handlers import user_private_router
+from .handlers.handlers_of_command import user_private_router

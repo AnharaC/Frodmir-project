@@ -1,3 +1,5 @@
 asincio-3.4.3
 aiogram-3.13.1
 python-dotenv
+pandas
+pandas openpyxl

@@ -1,8 +1,11 @@
 from aiogram import types
+
 from service.survey_manager import save_survey
 
 async def Punnett_table(callback: types.CallbackQuery, genotypes):
-    male_genotype, female_genotype = genotypes
+
+    male_genotype = [gene.strip() for gene in genotypes[1].strip('[]').split(',') if gene.strip()]
+    female_genotype = [gene.strip() for gene in genotypes[2].strip('[]').split(',') if gene.strip()]
     
     if male_genotype != None and female_genotype != None:
         children_genotypes = []
@@ -12,9 +15,11 @@ async def Punnett_table(callback: types.CallbackQuery, genotypes):
                 genotype = "".join(sorted(list(genotype))) # просто для того что бы не были генотыпов таких как "aA" или "BA"
                 children_genotypes.append(genotype)
 
+        genotype_data = {}
         for genotype in set(children_genotypes): # преобразование списка в множество, чтобы случайно не пройтись дважды по одному генотипу
             number_of_apppearences = children_genotypes.count(genotype) # расчет количество появлений конкретного генотипа среди всех возможных
             percentage = number_of_apppearences / len(children_genotypes) # ну и расчет вероятности по формуле количество появлений/общее количество
+            
 
         await callback.message.answer(
             text=f"Чоловічий генотип: {male_genotype}; \n"
