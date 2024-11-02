@@ -8,12 +8,13 @@ async def Punnett_table(callback: types.CallbackQuery, genotypes):
     female_genotype = [gene.strip() for gene in genotypes[2].strip('[]').split(',') if gene.strip()]
     
     if male_genotype != None and female_genotype != None:
-        children_genotypes = []
+        children_genotypes = set()
         for gene_1 in female_genotype:
             for gene_2 in male_genotype:
                 genotype = gene_1 + gene_2
                 genotype = "".join(sorted(list(genotype))) # просто для того что бы не были генотыпов таких как "aA" или "BA"
-                children_genotypes.append(genotype)
+                children_genotypes.add(genotype)
+        children_genotypes = list(children_genotypes)
 
         genotype_data = {}
         for genotype in set(children_genotypes): # преобразование списка в множество, чтобы случайно не пройтись дважды по одному генотипу
