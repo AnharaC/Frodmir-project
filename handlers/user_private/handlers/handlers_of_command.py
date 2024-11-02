@@ -1,4 +1,5 @@
 from aiogram import types, F
+import logging
 import os
 
 from aiogram.fsm.context import FSMContext
@@ -10,6 +11,7 @@ from service.survey_manager import get_survey_filename, get_survey_result
 
 from .first_survey_handlers import *
 from .second_survey_handlers import *
+from .history_handler import *
 
 from ..MessageState import MessageState
 from ..router import user_private_router
@@ -20,6 +22,17 @@ from middleware.CallbackMiddleware import CallbackMiddleware
 user_private_router.message.middleware(UserMessageMiddleware())
 user_private_router.callback_query.middleware(CallbackMiddleware())
 
+logging.basicConfig(level=logging.INFO)
+
+# Handler що не буде давати вводити команди під час опитування
+@user_private_router.message(
+        StateFilter(MessageState.quest_1, MessageState.quest_2, MessageState.quest_3, MessageState.st_quest_2, MessageState.st_quest_3, MessageState.stage_1, MessageState.stage_2), 
+        Command('help', 'start', 'about', 'survey', 'history'))
+async def block_commands(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    gif = os.path.join('assets', 'image', 'bot eto da.webm')
+    await message.answer_sticker(sticker=FSInputFile(gif), emoji="✋")
+    await message.answer("Опа, а низя низя!! Доки не скасуешь опитування, або не пройдешь низя низя")
 
 
 ## Handlers відповідаючи за start
@@ -80,45 +93,6 @@ async def command_clear_handler(message: Message, state: FSMContext):
 
     await state.clear()
     await message.answer_photo(photo=FSInputFile(image), caption="Clear!!")
-
-## Handlers відповідаючи за history
-@user_private_router.message(Command("history"))
-async def detailed_survey(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    photo = os.path.join('assets', 'image', 'photo_2024-10-26_13-10-32.jpg')
-
-    survey_filenames = get_survey_filename(user_id=user_id)
-    history_message = "📜 Історія опитуваннь:\n\n" + "\n".join([f"✅ {filename}" for filename in survey_filenames])
-    history_message += "\n\nНапишіть який з цих результатів опитуваннь ви хотіли би переглянути (Введіть номер опитування): "
-    await message.answer(history_message)
-
-    await state.set_state(MessageState.waiting_for_survey_selection)
-    await state.update_data(survey_filenames=survey_filenames)
-
-@user_private_router.message(MessageState.waiting_for_survey_selection)
-async def proc_survey_selection(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    selected_survey = message.text.strip()
-
-    data = await state.get_data()
-    survey_filenames = data.get("survey_filenames") # Забираємо список пройдених опитувань
-    
-    survey_id = int(selected_survey.split('_')[-1].split('.')[0]) # Забираємо номер опитування
-    survey_data = get_survey_result(user_id=user_id, survey_id=survey_id)
-    
-    if survey_data:
-        results = survey_data['results']
-        results_message = "\n".join(
-            [f"\t\t\t\t📌 Питання {question_id}: {response if response is not None else 'Не відповіли'}"
-             for question_id, response in results.items()]) # Створюємо строку з результатами опитування використовуючи result.items() для перебору та форматування кожного питання та його відповіді
-        
-        await message.answer(text=(
-            f"📄 Деталі опитування №{survey_data['survey_id']}:\n"
-            f"👤 ID користувача: {survey_data['user_id']}\n"
-            f"📝 Результати:\n{results_message}"
-        ))
-    else:
-        await message.answer("Не вдалося отримати данні. Спробуйте пізніше")
 
 
 ## Handlers відповідаючи за survey
