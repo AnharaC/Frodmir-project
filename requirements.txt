@@ -1,5 +1,4 @@
-asincio-3.4.3
-aiogram-3.13.1
+asincio
+aiogram
 python-dotenv
 pandas
-pandas openpyxl
