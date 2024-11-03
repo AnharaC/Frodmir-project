@@ -3,6 +3,7 @@ from aiogram.fsm.state import StatesGroup, State
 class MessageState(StatesGroup):
     
     waiting_for_survey_selection = State()
+    waiting_for_article_selection = State()
 
     quest_1 = State()
     quest_2 = State()

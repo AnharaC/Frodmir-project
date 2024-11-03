@@ -91,66 +91,58 @@ async def command_about_handler(message: Message):
     )
 
 
-## Доробити
-# @user_private_router.message(Command("articles"))
-# async def command_articles_handler(message: Message):
-#     query = "genetics"
-#     max_results = 5
+## Handlers відповідающий за статі /articles
+@user_private_router.message(Command("articles"))
+async def command_articles_handler(message: Message, state: FSMContext):
+    query = "genetics"
+    max_results = 5
 
-#     url = f"{ARTICLES_URL}?search_query={query}&start=0&max_results={max_results}"
+    url = f"{ARTICLES_URL}?search_query={query}&start=0&max_results={max_results}"
+    response = requests.get(url)
 
-#     response = requests.get(url)
+    if response.status_code == 200:
+        articles_xml = response.text
+        articles = []
 
-#     if response.status_code == 200:
-#         articles_xml = response.text
-#         articles = []
+        root = ET.fromstring(articles_xml)
+        for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
+            title = entry.find('{http://www.w3.org/2005/Atom}title').text
+            link = entry.find('{http://www.w3.org/2005/Atom}link').attrib['href']
+            articles.append({"title": title, "link": link})
 
-#         root = ET.fromstring(articles_xml)
-#         for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
-#             title = entry.find('{http://www.w3.org/2005/Atom}title').text
-#             link = entry.find('{http://www.w3.org/2005/Atom}link').attrib['href']
-#             articles.append({"title": title, "link": link})
+        await state.update_data(articles=articles)
 
-#         article_list = "\n".join([f"{i + 1}: {article['title']} - {article['link']}" for i, article in enumerate(articles)])
+        article_list = "\n".join([f"{i + 1}: {article['title']} - {article['link']}" for i, article in enumerate(articles)])
 
-#         await message.answer(
-#             text=f"📚 Список статей:\n{article_list}\n\nВиберіть статтю, ввівши її номер."
-#         )
-#     else:
-#         await message.answer("❌ Не вдалося отримати список статей.")
+        await message.answer(
+            text=f"📚 Список статей:\n{article_list}\n\nВиберіть статтю, ввівши її номер.",
+            reply_markup=get_callback_btns(btns={
+                "Відмінити": "cancel_articles"
+            })
+        )
+        await state.set_state(MessageState.waiting_for_article_selection)
+    else:
+        await message.answer("❌ Не вдалося отримати список статей.")
 
-# @user_private_router.message()
-# async def handle_article_selection(message: Message):
-#     try:
-#         article_index = int(message.text) - 1
-#         query = "genetics"
-#         max_results = 5
+@user_private_router.message(MessageState.waiting_for_article_selection)
+async def handle_article_selection(message: types.Message, state: FSMContext):
+    try:
+        article_index = int(message.text) - 1
 
-#         url = f"{ARTICLES_URL}?search_query={query}&start=0&max_results={max_results}"
-#         response = requests.get(url)
+        data = await state.get_data()
+        articles = data.get("articles", [])
 
-#         if response.status_code == 200:
-#             articles_xml = response.text
-#             articles = []
-
-#             root = ET.fromstring(articles_xml)
-#             for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
-#                 title = entry.find('{http://www.w3.org/2005/Atom}title').text
-#                 link = entry.find('{http://www.w3.org/2005/Atom}link').attrib['href']
-#                 articles.append({"title": title, "link": link})
-
-#             if 0 <= article_index < len(articles):
-#                 article = articles[article_index]
-#                 await message.answer(
-#                     text=f"📖 Стаття: {article['title']}\nПосилання: {article['link']}"
-#                 )
-#             else:
-#                 await message.answer("❌ Стаття не знайдена.")
-#         else:
-#             await message.answer("❌ Не вдалося отримати список статей.")
-#     except ValueError:
-#         await message.answer("❌ Будь ласка, введіть номер статті.")
-
+        if 0 <= article_index < len(articles):
+            article = articles[article_index]
+            await message.answer(
+                text=f"📖 Стаття: {article['title']}\nПосилання: {article['link']}"
+            )
+        else:
+            await message.answer("❌ Стаття не знайдена.")
+    except ValueError:
+        await message.answer("❌ Будь ласка, введіть номер статті.")
+    finally:
+        await state.clear()
 
 ## Handlers відповідаючи за clear(тимчасова команда)
 @user_private_router.message(Command("clear"))
