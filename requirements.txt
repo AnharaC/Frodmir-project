@@ -1,4 +1,4 @@
-asincio
+asyncio
 aiogram
 python-dotenv
 pandas
