@@ -5,4 +5,5 @@ private = [
     BotCommand(command='about', description="Детальніше про бота"),
     BotCommand(command='survey', description="Почати опитування"),
     BotCommand(command='history', description="Історія ваших подій"),
+    BotCommand(command='articles', description="Продивитися статі")
 ]

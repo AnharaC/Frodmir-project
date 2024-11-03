@@ -1,13 +1,15 @@
 from aiogram import types, F
+import requests
 import logging
 import os
+
+from xml.etree import ElementTree as ET
 
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, Command, or_f, StateFilter
 from aiogram.types import Message, FSInputFile
 
 from keyboard.InlineKeyboard import get_callback_btns
-from service.survey_manager import get_survey_filename, get_survey_result
 
 from .first_survey_handlers import *
 from .second_survey_handlers import *
@@ -24,10 +26,12 @@ user_private_router.callback_query.middleware(CallbackMiddleware())
 
 logging.basicConfig(level=logging.INFO)
 
+ARTICLES_URL = "http://export.arxiv.org/api/query"
+
 # Handler що не буде давати вводити команди під час опитування
 @user_private_router.message(
         StateFilter(MessageState.quest_1, MessageState.quest_2, MessageState.quest_3, MessageState.st_quest_2, MessageState.st_quest_3, MessageState.stage_1, MessageState.stage_2), 
-        Command('help', 'start', 'about', 'survey', 'history'))
+        Command('help', 'start', 'about', 'survey', 'history', 'articals'))
 async def block_commands(message: Message, state: FSMContext):
     current_state = await state.get_state()
     gif = os.path.join('assets', 'image', 'bot eto da.webm')
@@ -85,6 +89,68 @@ async def command_about_handler(message: Message):
         "Бот задасть кілька простих запитань, а ти отримаєш результат у вигляді генетичного прогнозу 🔮."
         )
     )
+
+
+## Доробити
+# @user_private_router.message(Command("articles"))
+# async def command_articles_handler(message: Message):
+#     query = "genetics"
+#     max_results = 5
+
+#     url = f"{ARTICLES_URL}?search_query={query}&start=0&max_results={max_results}"
+
+#     response = requests.get(url)
+
+#     if response.status_code == 200:
+#         articles_xml = response.text
+#         articles = []
+
+#         root = ET.fromstring(articles_xml)
+#         for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
+#             title = entry.find('{http://www.w3.org/2005/Atom}title').text
+#             link = entry.find('{http://www.w3.org/2005/Atom}link').attrib['href']
+#             articles.append({"title": title, "link": link})
+
+#         article_list = "\n".join([f"{i + 1}: {article['title']} - {article['link']}" for i, article in enumerate(articles)])
+
+#         await message.answer(
+#             text=f"📚 Список статей:\n{article_list}\n\nВиберіть статтю, ввівши її номер."
+#         )
+#     else:
+#         await message.answer("❌ Не вдалося отримати список статей.")
+
+# @user_private_router.message()
+# async def handle_article_selection(message: Message):
+#     try:
+#         article_index = int(message.text) - 1
+#         query = "genetics"
+#         max_results = 5
+
+#         url = f"{ARTICLES_URL}?search_query={query}&start=0&max_results={max_results}"
+#         response = requests.get(url)
+
+#         if response.status_code == 200:
+#             articles_xml = response.text
+#             articles = []
+
+#             root = ET.fromstring(articles_xml)
+#             for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
+#                 title = entry.find('{http://www.w3.org/2005/Atom}title').text
+#                 link = entry.find('{http://www.w3.org/2005/Atom}link').attrib['href']
+#                 articles.append({"title": title, "link": link})
+
+#             if 0 <= article_index < len(articles):
+#                 article = articles[article_index]
+#                 await message.answer(
+#                     text=f"📖 Стаття: {article['title']}\nПосилання: {article['link']}"
+#                 )
+#             else:
+#                 await message.answer("❌ Стаття не знайдена.")
+#         else:
+#             await message.answer("❌ Не вдалося отримати список статей.")
+#     except ValueError:
+#         await message.answer("❌ Будь ласка, введіть номер статті.")
+
 
 ## Handlers відповідаючи за clear(тимчасова команда)
 @user_private_router.message(Command("clear"))
